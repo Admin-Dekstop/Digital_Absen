@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Absensi Karyawan</title>
+  <!-- Tailwind CSS CDN untuk styling modern dan responsif -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts - Inter untuk tampilan font yang bersih dan modern -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Styling kustom untuk kotak pesan notifikasi */
+    .message-box {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px; /* Padding lebih besar */
+        border-radius: 12px; /* Sudut lebih membulat */
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Bayangan lebih dalam */
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; /* Transisi lebih halus */
+        display: flex;
+        align-items: center;
+        gap: 12px; /* Jarak antar elemen */
+        font-weight: 600; /* Teks lebih tebal */
+        font-size: 1.05em; /* Ukuran font sedikit lebih besar */
+    }
+    /* Kelas untuk menampilkan kotak pesan */
+    .message-box.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    /* Styling untuk pesan sukses */
+    .message-box.success {
+        background-color: #e6ffed; /* Hijau muda */
+        color: #00703c; /* Hijau gelap */
+        border: 1px solid #b2f0c7;
+    }
+    /* Styling untuk pesan error */
+    .message-box.error {
+        background-color: #ffe6e6; /* Merah muda */
+        color: #cc0000; /* Merah gelap */
+        border: 1px solid #ffb2b2;
+    }
+    /* Ukuran ikon di dalam kotak pesan */
+    .message-box svg {
+        width: 24px; /* Ikon lebih besar */
+        height: 24px;
+    }
+    /* Menerapkan font Inter ke seluruh body */
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+    /* Kelas hidden untuk menyembunyikan elemen secara tegas */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Kustomisasi scrollbar untuk tampilan lebih bersih */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #a8a8a8;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #888;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+  <!-- Header aplikasi -->
+  <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 md:p-8 text-center shadow-xl">
+    <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Sistem Absensi Karyawan Digital</h1>
+  </header>
+
+  <!-- Kontainer utama konten aplikasi -->
+  <div class="container mx-auto p-4 md:p-8 bg-white rounded-xl shadow-3xl mt-6 mb-8 flex-grow max-w-7xl">
+
+    <!-- Halaman Login -->
+    <div id="loginPage" class="max-w-sm mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+      <h2 class="text-3xl font-bold text-gray-800 mb-7 text-center">Selamat Datang</h2>
+      <div class="space-y-5">
+        <!-- Input Username -->
+        <input type="text" id="username" placeholder="Username"
+               class="p-3.5 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition duration-200 text-lg" />
+        <!-- Input Password -->
+        <input type="password" id="password" placeholder="Password"
+               class="p-3.5 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition duration-200 text-lg" />
+        <!-- Tombol Login -->
+        <button onclick="login()"
+                class="bg-blue-600 text-white py-3.5 px-6 rounded-lg w-full text-xl font-semibold
+                       hover:bg-blue-700 focus:outline-none focus:ring-3 focus:ring-blue-500 focus:ring-opacity-75
+                       transition duration-300 ease-in-out transform hover:scale-105 shadow-md">
+          Login
+        </button>
+      </div>
+    </div>
+
+    <!-- Halaman Karyawan (User) -->
+    <div id="userPage" class="hidden max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+      <h2 class="text-3xl font-bold text-gray-800 mb-7 text-center">Dashboard Karyawan</h2>
+      <div class="space-y-5 mb-8 text-center">
+        <!-- Tampilan nama pengguna dan tanggal saat ini -->
+        <p class="text-xl font-medium text-gray-700">Selamat datang, <span id="currentUserName" class="text-blue-600 font-semibold"></span>!</p>
+        <p class="text-lg text-gray-600">Hari Ini: <span id="currentDate" class="font-semibold text-gray-800"></span></p>
+
+        <!-- Tombol Clock In dan Clock Out -->
+        <div class="flex flex-col md:flex-row gap-4 mt-6 max-w-md mx-auto">
+            <button onclick="clockIn()" id="clockInBtn"
+                    class="bg-green-600 text-white py-3.5 px-6 rounded-lg w-full text-lg font-semibold
+                           hover:bg-green-700 focus:outline-none focus:ring-3 focus:ring-green-500 focus:ring-opacity-75
+                           transition duration-300 ease-in-out transform hover:scale-105 shadow-md">
+              Clock In
+            </button>
+            <button onclick="clockOut()" id="clockOutBtn" disabled
+                    class="bg-red-600 text-white py-3.5 px-6 rounded-lg w-full text-lg font-semibold
+                           hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed
+                           focus:outline-none focus:ring-3 focus:ring-red-500 focus:ring-opacity-75
+                           transition duration-300 ease-in-out transform hover:scale-105 shadow-md">
+              Clock Out
+            </button>
+        </div>
+      </div>
+
+      <!-- Riwayat Absensi Pribadi Karyawan -->
+      <h3 class="text-2xl font-semibold text-gray-800 mb-5 border-b pb-3 border-gray-200">Riwayat Absensi Anda</h3>
+      <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+        <table class="min-w-full bg-white divide-y divide-gray-200">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nama</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tanggal</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jam Masuk</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jam Pulang</th>
+            </tr>
+          </thead>
+          <tbody id="userAbsenData" class="bg-white divide-y divide-gray-100">
+            <!-- Data absensi user akan dimuat di sini -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tombol Logout dari halaman user -->
+      <button onclick="logout()"
+              class="mt-10 bg-gray-600 text-white py-3 px-6 rounded-lg w-full max-w-xs mx-auto block text-lg font-semibold
+                     hover:bg-gray-700 focus:outline-none focus:ring-3 focus:ring-gray-500 focus:ring-opacity-75
+                     transition duration-300 shadow-md">
+        Logout
+      </button>
+    </div>
+
+    <!-- Halaman Dashboard Admin -->
+    <div id="adminPage" class="hidden">
+      <h2 class="text-3xl font-bold text-gray-800 mb-7 text-center">Dashboard Admin</h2>
+
+      <!-- Tabel Data Kehadiran Karyawan untuk Admin -->
+      <h3 class="text-2xl font-semibold text-gray-800 mb-5 border-b pb-3 border-gray-200">Data Kehadiran Karyawan</h3>
+      <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+        <table class="min-w-full bg-white divide-y divide-gray-200">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nama</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tanggal</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Bulan</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Hari</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jam Masuk</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jam Pulang</th>
+            </tr>
+          </thead>
+          <tbody id="adminAbsenData" class="bg-white divide-y divide-gray-100">
+            <!-- Data absensi semua karyawan akan dimuat di sini -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bagian Manajemen Akun Pengguna -->
+      <h3 class="text-2xl font-semibold text-gray-800 mb-5 mt-10 border-b pb-3 border-gray-200">Manajemen Akun Pengguna</h3>
+
+      <!-- Tombol untuk menampilkan form tambah pengguna -->
+      <div class="flex flex-col md:flex-row gap-4 mb-6">
+        <button onclick="showAddUserForm('employee')"
+                class="bg-purple-600 text-white py-3 px-6 rounded-lg text-lg font-semibold
+                       hover:bg-purple-700 focus:outline-none focus:ring-3 focus:ring-purple-500 focus:ring-opacity-75
+                       transition duration-300 ease-in-out transform hover:scale-105 shadow-md flex-grow">
+          Tambah Karyawan Baru
+        </button>
+        <button onclick="showAddUserForm('admin')"
+                class="bg-indigo-600 text-white py-3 px-6 rounded-lg text-lg font-semibold
+                       hover:bg-indigo-700 focus:outline-none focus:ring-3 focus:ring-indigo-500 focus:ring-opacity-75
+                       transition duration-300 ease-in-out transform hover:scale-105 shadow-md flex-grow">
+          Tambah Admin Baru
+        </button>
+      </div>
+
+      <!-- Tabel Data Akun Pengguna (Admin & Karyawan) -->
+      <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+        <table class="min-w-full bg-white divide-y divide-gray-200">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Username</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Password</th>
+              <th class="py-3 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Peran</th>
+              <th class="py-3 px-6 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="userAccountsTable" class="bg-white divide-y divide-gray-100">
+            <!-- Data akun pengguna akan dimuat di sini -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Form Tambah/Edit Pengguna (sebagai modal atau section yang ditoggle) -->
+      <div id="addUserFormContainer" class="hidden mt-10 max-w-lg mx-auto bg-gray-50 p-6 rounded-lg shadow-lg border border-gray-200">
+        <h4 class="text-xl font-semibold text-gray-800 mb-5 border-b pb-3 border-gray-300" id="formTitle"></h4>
+        <form id="addUserForm" class="space-y-5">
+            <input type="text" id="formUsername" placeholder="Username" readonly
+                   class="p-3.5 border border-gray-300 rounded-lg w-full bg-gray-200 cursor-not-allowed text-lg" />
+            <input type="password" id="formPassword" placeholder="Password"
+                   class="p-3.5 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition duration-200 text-lg" />
+            <select id="formRole"
+                    class="p-3.5 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-3 focus:ring-blue-400 transition duration-200 text-lg">
+                <option value="user">Karyawan</option>
+                <option value="admin">Admin</option>
+            </select>
+            <div class="flex gap-4">
+                <button type="button" onclick="saveUserChanges()"
+                        class="bg-blue-600 text-white py-3.5 px-6 rounded-lg w-full text-lg font-semibold
+                               hover:bg-blue-700 focus:outline-none focus:ring-3 focus:ring-blue-500 focus:ring-opacity-75
+                               transition duration-300 ease-in-out transform hover:scale-105 shadow-md">
+                    Simpan Perubahan
+                </button>
+                <button type="button" onclick="hideAddUserForm()"
+                        class="bg-gray-400 text-white py-3.5 px-6 rounded-lg w-full text-lg font-semibold
+                               hover:bg-gray-500 focus:outline-none focus:ring-3 focus:ring-gray-300 focus:ring-opacity-75
+                               transition duration-300 shadow-md">
+                    Batal
+                </button>
+            </div>
+        </form>
+      </div>
+
+      <!-- Tombol Logout dari halaman admin -->
+      <button onclick="logout()"
+              class="mt-10 bg-gray-600 text-white py-3 px-6 rounded-lg w-full max-w-xs mx-auto block text-lg font-semibold
+                     hover:bg-gray-700 focus:outline-none focus:ring-3 focus:ring-gray-500 focus:ring-opacity-75
+                     transition duration-300 shadow-md">
+        Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Elemen Kotak Pesan untuk notifikasi -->
+  <div id="messageBox" class="message-box hidden"></div>
+
+  <!-- Footer aplikasi -->
+  <footer class="bg-gray-800 text-white p-5 text-center text-sm shadow-inner mt-auto">
+    <p>&copy; 2025 Sistem Absensi Karyawan Fandy. Semua Hak Dilindungi.</p>
+  </footer>
+
+  <script>
+    // Data pengguna demo dan data absensi
+    // Struktur: { username: { password: "password", role: "admin" | "user" } }
+    const users = {
+      admin: { password: "admin123", role: "admin" }, // Akun admin demo
+      budi: { password: "passbudi", role: "user" },   // Akun karyawan demo 1
+      sinta: { password: "passsinta", role: "user" }  // Akun karyawan demo 2
+    };
+
+    // Data absensi akan disimpan dalam objek ini
+    // Struktur: { username: [{ date: 'YYYY-MM-DD', jamMasuk: 'HH:MM', jamPulang: 'HH:MM', ... }] }
+    const absenData = {};
+    let currentUser = null; // Menyimpan username pengguna yang sedang login
+    let editingUser = null; // Menyimpan username user yang sedang diedit
+
+    // Fungsi helper untuk mendapatkan format tanggal yang diinginkan
+    const getFormattedDate = (dateObj) => dateObj.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+    const getFormattedDay = (dateObj) => dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+    const getFormattedMonth = (dateObj) => dateObj.toLocaleDateString('id-ID', { month: 'long' });
+    const getCurrentTime = () => new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+    /**
+     * Menampilkan pesan notifikasi kustom di layar.
+     * @param {string} message - Pesan yang akan ditampilkan.
+     * @param {'success'|'error'} type - Tipe pesan (sukses atau error).
+     */
+    function showMessageBox(message, type) {
+      const messageBox = document.getElementById("messageBox");
+      messageBox.className = `message-box ${type} show`; // Menambahkan kelas untuk styling dan menampilkan
+      let icon = '';
+      // Memilih ikon berdasarkan tipe pesan
+      if (type === 'success') {
+          icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>`; // Ikon centang
+      } else if (type === 'error') {
+          icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>`; // Ikon tanda seru
+      }
+      messageBox.innerHTML = `${icon}<span>${message}</span>`; // Menambahkan ikon dan pesan ke dalam kotak pesan
+
+      // Menyembunyikan kotak pesan setelah 3 detik
+      setTimeout(() => {
+        messageBox.classList.remove("show");
+      }, 3000);
+    }
+
+    /**
+     * Fungsi untuk menangani proses login pengguna.
+     */
+    function login() {
+      const usernameInput = document.getElementById("username").value.toLowerCase();
+      const passwordInput = document.getElementById("password").value;
+
+      // Memeriksa kredensial pengguna
+      if (users[usernameInput] && users[usernameInput].password === passwordInput) {
+        currentUser = usernameInput; // Menyimpan username yang berhasil login
+        document.getElementById("loginPage").classList.add("hidden"); // Sembunyikan halaman login
+
+        // Mengarahkan ke halaman yang sesuai berdasarkan peran pengguna
+        if (users[currentUser].role === "admin") {
+          document.getElementById("adminPage").classList.remove("hidden"); // Tampilkan halaman admin
+          renderAdminAbsenData(); // Muat data absensi untuk admin
+          renderUserAccountsTable(); // Muat data akun pengguna untuk admin
+        } else {
+          document.getElementById("userPage").classList.remove("hidden"); // Tampilkan halaman user
+          renderUserPage(); // Atur tampilan halaman user
+          renderUserAbsenData(currentUser); // Muat riwayat absensi user
+        }
+        showMessageBox(`Selamat datang, ${usernameInput.charAt(0).toUpperCase() + usernameInput.slice(1)}!`, "success"); // Tampilkan pesan sukses
+      } else {
+        showMessageBox("Login gagal! Username atau password salah.", "error"); // Tampilkan pesan error
+      }
+    }
+
+    /**
+     * Fungsi untuk menangani proses logout pengguna.
+     */
+    function logout() {
+        // Sembunyikan semua halaman dan tampilkan kembali halaman login
+        document.getElementById("loginPage").classList.remove("hidden");
+        document.getElementById("userPage").classList.add("hidden");
+        document.getElementById("adminPage").classList.add("hidden");
+        // Bersihkan input username dan password
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+        currentUser = null; // Reset pengguna yang sedang login
+        showMessageBox("Anda telah logout.", "success"); // Tampilkan pesan logout
+    }
+
+    /**
+     * Mengatur elemen-elemen di halaman user setelah login (misalnya nama, tanggal, status tombol).
+     */
+    function renderUserPage() {
+        const today = new Date();
+        document.getElementById("currentUserName").textContent = currentUser.charAt(0).toUpperCase() + currentUser.slice(1); // Tampilkan nama user
+        document.getElementById("currentDate").textContent = getFormattedDate(today); // Tampilkan tanggal saat ini
+
+        // Cek apakah user sudah Clock In hari ini
+        const todayKey = today.toISOString().slice(0, 10); // Dapatkan tanggal hari ini dalam formatgetFullYear()-MM-DD
+        const userTodayAbsen = absenData[currentUser]?.find(a => a.date === todayKey);
+
+        // Mengatur status tombol Clock In dan Clock Out
+        if (userTodayAbsen && userTodayAbsen.jamMasuk) {
+            document.getElementById("clockInBtn").disabled = true; // Nonaktifkan Clock In jika sudah Clock In
+            document.getElementById("clockOutBtn").disabled = false; // Aktifkan Clock Out
+        } else {
+            document.getElementById("clockInBtn").disabled = false; // Aktifkan Clock In
+            document.getElementById("clockOutBtn").disabled = true; // Nonaktifkan Clock Out
+        }
+        // Jika sudah Clock Out, nonaktifkan kedua tombol
+        if (userTodayAbsen && userTodayAbsen.jamPulang) {
+            document.getElementById("clockInBtn").disabled = true;
+            document.getElementById("clockOutBtn").disabled = true;
+        }
+    }
+
+    /**
+     * Fungsi untuk merekam jam masuk (Clock In) pengguna.
+     */
+    function clockIn() {
+        if (!currentUser) return; // Pastikan ada pengguna yang login
+
+        const now = new Date();
+        const todayKey = now.toISOString().slice(0, 10); // Dapatkan tanggal hari ini dalam formatgetFullYear()-MM-DD
+
+        // Inisialisasi array absenData untuk user ini jika belum ada
+        if (!absenData[currentUser]) {
+            absenData[currentUser] = [];
+        }
+
+        // Cari entri absensi untuk hari ini
+        let entry = absenData[currentUser].find(item => item.date === todayKey);
+
+        if (entry && entry.jamMasuk) {
+            showMessageBox("Anda sudah Clock In hari ini!", "error"); // Pesan jika sudah Clock In
+        } else {
+            if (!entry) {
+                // Jika belum ada entri untuk hari ini, buat entri baru
+                entry = {
+                    date: todayKey,
+                    tanggal: getFormattedDate(now),
+                    bulan: getFormattedMonth(now),
+                    hari: getFormattedDay(now),
+                    jamMasuk: '',
+                    jamPulang: ''
+                };
+                absenData[currentUser].push(entry); // Tambahkan entri baru ke data absensi user
+            }
+            entry.jamMasuk = getCurrentTime(); // Rekam jam masuk saat ini
+            showMessageBox(`Clock In berhasil pada ${entry.jamMasuk}!`, "success"); // Tampilkan pesan sukses
+            // Nonaktifkan Clock In dan aktifkan Clock Out
+            document.getElementById("clockInBtn").disabled = true;
+            document.getElementById("clockOutBtn").disabled = false;
+            renderUserAbsenData(currentUser); // Perbarui tabel riwayat absensi user
+            renderAdminAbsenData(); // Perbarui tabel absensi di dashboard admin
+        }
+    }
+
+    /**
+     * Fungsi untuk merekam jam pulang (Clock Out) pengguna.
+     */
+    function clockOut() {
+        if (!currentUser) return; // Pastikan ada pengguna yang login
+
+        const now = new Date();
+        const todayKey = now.toISOString().slice(0, 10); // Dapatkan tanggal hari ini
+
+        // Cari entri absensi untuk hari ini
+        const entry = absenData[currentUser]?.find(item => item.date === todayKey);
+
+        if (!entry || !entry.jamMasuk) {
+            showMessageBox("Anda harus Clock In terlebih dahulu!", "error"); // Pesan jika belum Clock In
+        } else if (entry.jamPulang) {
+            showMessageBox("Anda sudah Clock Out hari ini!", "error"); // Pesan jika sudah Clock Out
+        } else {
+            entry.jamPulang = getCurrentTime(); // Rekam jam pulang saat ini
+            showMessageBox(`Clock Out berhasil pada ${entry.jamPulang}!`, "success"); // Tampilkan pesan sukses
+            // Nonaktifkan kedua tombol setelah Clock Out
+            document.getElementById("clockOutBtn").disabled = true;
+            document.getElementById("clockInBtn").disabled = true;
+            renderUserAbsenData(currentUser); // Perbarui tabel riwayat absensi user
+            renderAdminAbsenData(); // Perbarui tabel absensi di dashboard admin
+        }
+    }
+
+    /**
+     * Menampilkan riwayat absensi hanya untuk user yang sedang login di halaman user.
+     * @param {string} username - Username user yang akan ditampilkan datanya.
+     */
+    function renderUserAbsenData(username) {
+        const tbody = document.getElementById("userAbsenData");
+        tbody.innerHTML = ""; // Bersihkan isi tabel sebelumnya
+
+        const userSpecificData = absenData[username] || []; // Dapatkan data absensi khusus user
+
+        if (userSpecificData.length === 0) {
+            // Tampilkan pesan jika belum ada riwayat absensi
+            const noDataRow = document.createElement("tr");
+            noDataRow.innerHTML = `<td colspan="4" class="py-4 px-6 text-center text-gray-500 italic">Belum ada riwayat absensi.</td>`;
+            tbody.appendChild(noDataRow);
+            return;
+        }
+
+        // Urutkan data dari yang terbaru ke yang terlama berdasarkan tanggal
+        userSpecificData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        userSpecificData.forEach(data => {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50 transition-colors duration-150"; // Styling baris tabel
+            tr.innerHTML = `
+                <td class="py-3 px-6 text-left whitespace-nowrap font-medium text-gray-800">${username.charAt(0).toUpperCase() + username.slice(1)}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${data.tanggal}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${data.jamMasuk || '<span class="text-gray-400">-</span>'}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${data.jamPulang || '<span class="text-gray-400">-</span>'}</td>
+            `;
+            tbody.appendChild(tr); // Tambahkan baris ke tabel
+        });
+    }
+
+    /**
+     * Menampilkan seluruh data absensi karyawan untuk tampilan admin.
+     */
+    function renderAdminAbsenData() {
+        const tbody = document.getElementById("adminAbsenData");
+        tbody.innerHTML = ""; // Bersihkan isi tabel sebelumnya
+
+        const allAbsenRecords = [];
+        // Menggabungkan semua data absensi dari semua pengguna
+        for (const userKey in absenData) {
+            if (absenData.hasOwnProperty(userKey)) {
+                absenData[userKey].forEach(record => {
+                    allAbsenRecords.push({
+                        username: userKey,
+                        ...record // Salin semua properti record (date, jamMasuk, jamPulang, dll.)
+                    });
+                });
+            }
+        }
+
+        if (allAbsenRecords.length === 0) {
+            // Tampilkan pesan jika belum ada data absensi
+            const noDataRow = document.createElement("tr");
+            noDataRow.innerHTML = `<td colspan="6" class="py-4 px-6 text-center text-gray-500 italic">Belum ada data absensi karyawan.</td>`;
+            tbody.appendChild(noDataRow);
+            return;
+        }
+
+        // Urutkan data berdasarkan tanggal terbaru, lalu berdasarkan username
+        allAbsenRecords.sort((a, b) => {
+            const dateComparison = new Date(b.date) - new Date(a.date);
+            if (dateComparison !== 0) return dateComparison; // Urutkan berdasarkan tanggal
+            return a.username.localeCompare(b.username); // Jika tanggal sama, urutkan berdasarkan username
+        });
+
+        allAbsenRecords.forEach(data => {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50 transition-colors duration-150"; // Styling baris tabel
+            tr.innerHTML = `
+                <td class="py-3 px-6 text-left whitespace-nowrap font-medium text-gray-800">${data.username.charAt(0).toUpperCase() + data.username.slice(1)}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${data.tanggal}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${data.bulan}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${data.hari}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${data.jamMasuk || '<span class="text-gray-400">-</span>'}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${data.jamPulang || '<span class="text-gray-400">-</span>'}</td>
+            `;
+            tbody.appendChild(tr); // Tambahkan baris ke tabel
+        });
+    }
+
+    /**
+     * Menampilkan tabel semua akun pengguna (admin dan karyawan) di dashboard admin.
+     */
+    function renderUserAccountsTable() {
+        const tbody = document.getElementById("userAccountsTable");
+        tbody.innerHTML = ""; // Bersihkan isi tabel sebelumnya
+
+        const allUserAccounts = Object.keys(users).map(username => ({
+            username: username,
+            password: users[username].password,
+            role: users[username].role
+        }));
+
+        if (allUserAccounts.length === 0) {
+            const noDataRow = document.createElement("tr");
+            noDataRow.innerHTML = `<td colspan="4" class="py-4 px-6 text-center text-gray-500 italic">Belum ada akun pengguna.</td>`;
+            tbody.appendChild(noDataRow);
+            return;
+        }
+
+        allUserAccounts.forEach(user => {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50 transition-colors duration-150";
+            tr.innerHTML = `
+                <td class="py-3 px-6 text-left font-medium text-gray-800">${user.username.charAt(0).toUpperCase() + user.username.slice(1)}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${user.password}</td>
+                <td class="py-3 px-6 text-left text-gray-700">${user.role === 'admin' ? 'Admin' : 'Karyawan'}</td>
+                <td class="py-3 px-6 text-center">
+                    <button onclick="editUserAccount('${user.username}')"
+                            class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition duration-200 mr-2">
+                        Edit
+                    </button>
+                    <button onclick="deleteUserAccount('${user.username}')"
+                            class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition duration-200">
+                        Hapus
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    /**
+     * Menampilkan form untuk menambah/mengedit pengguna.
+     * @param {string} type - 'employee' untuk tambah karyawan, 'admin' untuk tambah admin, atau username untuk edit.
+     */
+    function showAddUserForm(type) {
+        const formContainer = document.getElementById("addUserFormContainer");
+        const formTitle = document.getElementById("formTitle");
+        const formUsername = document.getElementById("formUsername");
+        const formPassword = document.getElementById("formPassword");
+        const formRole = document.getElementById("formRole");
+
+        formContainer.classList.remove("hidden"); // Tampilkan form
+
+        if (type === 'employee') {
+            formTitle.textContent = "Tambah Akun Karyawan Baru";
+            formUsername.value = "";
+            formUsername.readOnly = false;
+            formUsername.classList.remove("bg-gray-200", "cursor-not-allowed");
+            formPassword.value = "";
+            formRole.value = "user";
+            editingUser = null;
+        } else if (type === 'admin') {
+            formTitle.textContent = "Tambah Akun Admin Baru";
+            formUsername.value = "";
+            formUsername.readOnly = false;
+            formUsername.classList.remove("bg-gray-200", "cursor-not-allowed");
+            formPassword.value = "";
+            formRole.value = "admin";
+            editingUser = null;
+        } else { // Ini adalah mode edit
+            editingUser = type; // 'type' di sini adalah username yang akan diedit
+            const userToEdit = users[editingUser];
+            if (userToEdit) {
+                formTitle.textContent = `Edit Akun: ${editingUser.charAt(0).toUpperCase() + editingUser.slice(1)}`;
+                formUsername.value = editingUser;
+                formUsername.readOnly = true; // Username tidak bisa diubah saat edit
+                formUsername.classList.add("bg-gray-200", "cursor-not-allowed");
+                formPassword.value = userToEdit.password;
+                formRole.value = userToEdit.role;
+            } else {
+                showMessageBox("Pengguna tidak ditemukan untuk diedit.", "error");
+                hideAddUserForm();
+            }
+        }
+    }
+
+    /**
+     * Menyembunyikan form tambah/edit pengguna.
+     */
+    function hideAddUserForm() {
+        document.getElementById("addUserFormContainer").classList.add("hidden");
+        editingUser = null; // Reset editingUser
+        document.getElementById("addUserForm").reset(); // Reset form
+    }
+
+    /**
+     * Menyimpan perubahan pada akun pengguna (tambah baru atau edit).
+     */
+    function saveUserChanges() {
+        const username = document.getElementById("formUsername").value.toLowerCase();
+        const password = document.getElementById("formPassword").value;
+        const role = document.getElementById("formRole").value;
+
+        if (!username || !password) {
+            showMessageBox("Username dan password tidak boleh kosong.", "error");
+            return;
+        }
+
+        if (editingUser) { // Mode edit
+            if (editingUser !== username && users[username]) {
+                // Jika username diubah dan username baru sudah ada
+                showMessageBox("Username baru sudah ada. Silakan pilih username lain.", "error");
+                return;
+            }
+            // Hapus user lama jika username berubah
+            if (editingUser !== username) {
+                delete users[editingUser];
+                // Hapus data absen lama jika ada
+                if (absenData[editingUser]) {
+                    absenData[username] = absenData[editingUser]; // Pindahkan data absen ke username baru
+                    delete absenData[editingUser];
+                }
+            }
+            users[username] = { password: password, role: role };
+            showMessageBox(`Akun '${username}' berhasil diperbarui!`, "success");
+        } else { // Mode tambah baru
+            if (users[username]) {
+                showMessageBox("Username sudah ada. Silakan pilih username lain.", "error");
+                return;
+            }
+            users[username] = { password: password, role: role };
+            showMessageBox(`Akun '${username}' (${role === 'admin' ? 'Admin' : 'Karyawan'}) berhasil ditambahkan!`, "success");
+        }
+
+        hideAddUserForm(); // Sembunyikan form
+        renderUserAccountsTable(); // Perbarui tabel akun pengguna
+        renderAdminAbsenData(); // Perbarui tabel absensi (jika ada perubahan username)
+    }
+
+    /**
+     * Memulai proses edit akun pengguna.
+     * @param {string} username - Username akun yang akan diedit.
+     */
+    function editUserAccount(username) {
+        showAddUserForm(username); // Memanggil form dalam mode edit
+    }
+
+    /**
+     * Menghapus akun pengguna.
+     * @param {string} username - Username akun yang akan dihapus.
+     */
+    function deleteUserAccount(username) {
+        if (currentUser === username) {
+            showMessageBox("Tidak bisa menghapus akun Anda sendiri saat ini login.", "error");
+            return;
+        }
+        // Menggunakan confirm() untuk validasi, dalam aplikasi nyata diganti dengan modal kustom
+        if (confirm(`Apakah Anda yakin ingin menghapus akun '${username}'? Data absensi terkait juga akan dihapus.`)) {
+            delete users[username]; // Hapus user dari objek users
+            delete absenData[username]; // Hapus data absensi terkait user
+            showMessageBox(`Akun '${username}' berhasil dihapus.`, "success");
+            renderUserAccountsTable(); // Perbarui tabel akun pengguna
+            renderAdminAbsenData(); // Perbarui tabel absensi di dashboard admin
+        }
+    }
+
+    // Inisialisasi awal saat halaman dimuat
+    document.addEventListener("DOMContentLoaded", () => {
+        // Panggil renderAdminAbsenData dan renderUserAccountsTable saat halaman dimuat
+        renderAdminAbsenData();
+        renderUserAccountsTable();
+    });
+  </script>
+</body>
+</html>
