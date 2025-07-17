@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistem Absensi Karyawan</title>
+    <title>Sistem Absensi Karyawan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -13,43 +13,57 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
     <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
-        <div class="text-center">
-            <h1 class="text-3xl font-bold text-gray-800">Sistem Absensi</h1>
-            <p class="text-gray-500">Login untuk melanjutkan</p>
-        </div>
         
-        <div id="token-info" class="p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded-md">
-            <h4 class="font-bold">Penting!</h4>
-            <p class="text-sm">Pastikan Anda telah membuat repositori dengan nama <strong class="font-semibold">data-absensi-karyawan</strong> di akun GitHub Anda.</p>
-            <a href="https://github.com/settings/tokens/new?scopes=repo&description=AbsensiAppToken" target="_blank" class="text-sm text-blue-600 hover:underline mt-2 inline-block">Buat Token GitHub di sini &rarr;</a>
+        <!-- Login Form (Default) -->
+        <div id="login-view">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Selamat Datang</h1>
+                <p class="text-gray-500">Silakan login untuk melanjutkan</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-username" class="text-sm font-medium text-gray-700">Username</label>
+                    <input id="login-username" type="text" required class="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="login-password" class="text-sm font-medium text-gray-700">Password</label>
+                    <input id="login-password" type="password" required class="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Login</button>
+            </form>
+            <p class="text-center text-sm text-gray-600 mt-6">
+                Belum punya akun? 
+                <a href="#" id="show-register-view" class="font-medium text-blue-600 hover:underline">Buat akun di sini</a>
+            </p>
         </div>
 
-        <form id="login-form" class="space-y-4">
-            <div>
-                <label for="github-token" class="text-sm font-medium text-gray-700">GitHub Personal Access Token</label>
-                <input id="github-token" name="github-token" type="password" required
-                    class="w-full px-3 py-2 mt-1 text-gray-700 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Masukkan token Anda">
+        <!-- Register Form (Hidden by default) -->
+        <div id="register-view" class="hidden">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Buat Akun Baru</h1>
+                <p class="text-gray-500">Daftarkan diri Anda sebagai karyawan</p>
             </div>
-            <div>
-                <label for="username" class="text-sm font-medium text-gray-700">Username</label>
-                <input id="username" name="username" type="text" autocomplete="username" required
-                    class="w-full px-3 py-2 mt-1 text-gray-700 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Username aplikasi Anda">
-            </div>
-            <div>
-                <label for="password" class="text-sm font-medium text-gray-700">Password</label>
-                <input id="password" name="password" type="password" autocomplete="current-password" required
-                    class="w-full px-3 py-2 mt-1 text-gray-700 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Password aplikasi Anda">
-            </div>
-            <div>
-                <button type="submit"
-                    class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300">
-                    Login
-                </button>
-            </div>
-        </form>
+            <form id="register-form" class="space-y-4">
+                <div>
+                    <label for="register-username" class="text-sm font-medium text-gray-700">Username</label>
+                    <input id="register-username" type="text" required class="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="register-password" class="text-sm font-medium text-gray-700">Password</label>
+                    <input id="register-password" type="password" required class="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                 <div>
+                    <label for="register-password-confirm" class="text-sm font-medium text-gray-700">Konfirmasi Password</label>
+                    <input id="register-password-confirm" type="password" required class="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700">Daftar</button>
+            </form>
+            <p class="text-center text-sm text-gray-600 mt-6">
+                Sudah punya akun? 
+                <a href="#" id="show-login-view" class="font-medium text-blue-600 hover:underline">Login di sini</a>
+            </p>
+        </div>
+
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
