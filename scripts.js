@@ -1,31 +1,19 @@
 // ===================================================================================
-// PENTING: PERINGATAN KEAMANAN
+// KONFIGURASI APLIKASI
+// Nama repositori yang HARUS digunakan oleh pengguna di akun GitHub mereka.
 // ===================================================================================
-// Menyimpan GitHub Personal Access Token (PAT) di localStorage pada browser
-// memiliki risiko keamanan yang signifikan. Siapapun yang memiliki akses fisik
-// ke browser Anda dapat mengambil token ini dan mendapatkan kontrol penuh
-// atas repositori yang terkait.
-//
-// Gunakan solusi ini HANYA untuk:
-// 1. Proyek internal dengan pengguna yang sangat terpercaya.
-// 2. Proof-of-concept atau pembelajaran.
-//
-// JANGAN PERNAH menggunakan metode ini di lingkungan produksi publik.
-// Untuk aplikasi nyata, gunakan alur otentikasi yang aman seperti OAuth2.
+const REPO_CONFIG = {
+    NAME: 'data-absensi-karyawan' 
+};
 // ===================================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Kunci untuk menyimpan data di localStorage
     const LS_KEYS = {
         GITHUB_TOKEN: 'absensi_github_token',
         REPO_PATH: 'absensi_repo_path',
         USER_INFO: 'absensi_user_info'
     };
 
-    // ===================================================================================
-    // GITHUB API HELPER
-    // Kelas untuk membungkus interaksi dengan GitHub API
-    // ===================================================================================
     class GitHubAPI {
         constructor(token, repoPath) {
             this.token = token;
@@ -37,18 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        // Mengambil konten file dari repo
         async getFile(filePath) {
             try {
-                const response = await fetch(`${this.baseUrl}/contents/${filePath}`, {
-                    headers: this.headers
-                });
+                const response = await fetch(`${this.baseUrl}/contents/${filePath}`, { headers: this.headers });
                 if (!response.ok) {
-                    if (response.status === 404) return null; // File tidak ditemukan
+                    if (response.status === 404) return null;
                     throw new Error(`Gagal mengambil file: ${response.statusText}`);
                 }
                 const data = await response.json();
-                // Konten dari GitHub API di-encode dalam Base64, jadi perlu di-decode
                 const content = atob(data.content);
                 return { content, sha: data.sha };
             } catch (error) {
@@ -57,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Membuat atau memperbarui file di repo
         async updateFile(filePath, content, sha, commitMessage) {
             try {
                 const response = await fetch(`${this.baseUrl}/contents/${filePath}`, {
@@ -65,13 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: this.headers,
                     body: JSON.stringify({
                         message: commitMessage,
-                        content: btoa(content), // Encode konten ke Base64 sebelum mengirim
+                        content: btoa(content),
                         sha: sha
                     })
                 });
-                if (!response.ok) {
-                    throw new Error(`Gagal memperbarui file: ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`Gagal memperbarui file: ${response.statusText}`);
                 return await response.json();
             } catch (error) {
                 console.error('Error in updateFile:', error);
@@ -80,9 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ===================================================================================
-    // FUNGSI OTENTIKASI & UTILITAS
-    // ===================================================================================
     const auth = {
         login: (token, repoPath, userInfo) => {
             localStorage.setItem(LS_KEYS.GITHUB_TOKEN, token);
@@ -93,10 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Object.values(LS_KEYS).forEach(key => localStorage.removeItem(key));
             window.location.href = 'index.html';
         },
-        getUserInfo: () => {
-            const info = localStorage.getItem(LS_KEYS.USER_INFO);
-            return info ? JSON.parse(info) : null;
-        },
+        getUserInfo: () => JSON.parse(localStorage.getItem(LS_KEYS.USER_INFO)),
         getApi: () => {
             const token = localStorage.getItem(LS_KEYS.GITHUB_TOKEN);
             const repoPath = localStorage.getItem(LS_KEYS.REPO_PATH);
@@ -110,61 +85,74 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             if (requiredRole && userInfo.role !== requiredRole) {
-                auth.logout(); // Jika role tidak sesuai, logout
+                auth.logout();
                 return;
             }
-            document.getElementById('user-display-name').textContent = userInfo.username;
-            document.getElementById('logout-btn').addEventListener('click', auth.logout);
+            const userDisplayName = document.getElementById('user-display-name');
+            if (userDisplayName) userDisplayName.textContent = userInfo.username;
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) logoutBtn.addEventListener('click', auth.logout);
         }
     };
 
     // ===================================================================================
-    // LOGIKA HALAMAN LOGIN (index.html)
+    // LOGIKA HALAMAN LOGIN (index.html) - DENGAN DETEKSI OTOMATIS
     // ===================================================================================
     if (document.getElementById('login-form')) {
         const loginForm = document.getElementById('login-form');
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
             Swal.fire({
                 title: 'Mencoba Login...',
-                text: 'Mohon tunggu sebentar.',
+                text: 'Mendeteksi repositori dari token Anda...',
                 allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+                didOpen: () => Swal.showLoading()
             });
 
             const token = document.getElementById('github-token').value.trim();
-            const repoPath = document.getElementById('repo-path').value.trim();
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
+            const appUsername = document.getElementById('username').value.trim();
+            const appPassword = document.getElementById('password').value.trim();
 
-            if (!token || !repoPath || !username || !password) {
+            if (!token || !appUsername || !appPassword) {
                 Swal.fire('Error', 'Semua field harus diisi!', 'error');
                 return;
             }
 
             try {
+                // Langkah 1: Gunakan token untuk mencari tahu siapa pengguna GitHub
+                const userResponse = await fetch('https://api.github.com/user', {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+
+                if (!userResponse.ok) {
+                    throw new Error('Token GitHub tidak valid atau gagal mengakses API.');
+                }
+
+                const githubUser = await userResponse.json();
+                const githubUsername = githubUser.login;
+                
+                // Langkah 2: Bentuk path repositori secara otomatis
+                const repoPath = `${githubUsername}/${REPO_CONFIG.NAME}`;
+                Swal.update({ text: `Repositori terdeteksi: ${repoPath}. Memverifikasi pengguna...` });
+
+                // Langkah 3: Lanjutkan login seperti biasa dengan path yang sudah dideteksi
                 const api = new GitHubAPI(token, repoPath);
                 const usersFile = await api.getFile('users.csv');
 
                 if (!usersFile) {
-                    throw new Error('File users.csv tidak ditemukan di repositori. Pastikan path repositori benar dan file ada.');
+                    throw new Error(`File users.csv tidak ditemukan di repositori '${repoPath}'. Pastikan nama repositori Anda adalah '${REPO_CONFIG.NAME}'.`);
                 }
 
                 const parsedUsers = Papa.parse(usersFile.content, { header: true, skipEmptyLines: true }).data;
-                const user = parsedUsers.find(u => u.username === username && u.password === password);
+                const user = parsedUsers.find(u => u.username === appUsername && u.password === appPassword);
 
                 if (user) {
                     auth.login(token, repoPath, { username: user.username, role: user.role });
                     Swal.close();
-                    if (user.role === 'admin') {
-                        window.location.href = 'admin-dashboard.html';
-                    } else {
-                        window.location.href = 'karyawan-dashboard.html';
-                    }
+                    window.location.href = user.role === 'admin' ? 'admin-dashboard.html' : 'karyawan-dashboard.html';
                 } else {
-                    Swal.fire('Gagal Login', 'Username atau password salah.', 'error');
+                    Swal.fire('Gagal Login', 'Username atau password aplikasi salah.', 'error');
                 }
             } catch (error) {
                 Swal.fire('Error', `Terjadi kesalahan: ${error.message}`, 'error');
@@ -173,8 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ===================================================================================
-    // LOGIKA DASBOR KARYAWAN (karyawan-dashboard.html)
+    // LOGIKA DASBOR KARYAWAN & ADMIN (Tidak ada perubahan signifikan)
     // ===================================================================================
+    // ... (Salin sisa kode dari file scripts.js sebelumnya di sini) ...
+    // ... (Kode untuk dasbor karyawan dan admin tetap sama) ...
     if (document.getElementById('clock-in-btn')) {
         auth.checkAuth('karyawan');
         const api = auth.getApi();
@@ -209,7 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const userRecords = records.filter(r => r.username === userInfo.username).reverse();
                 
-                // Render history
                 historyBody.innerHTML = '';
                 if (userRecords.length > 0) {
                     userRecords.forEach(rec => {
@@ -238,7 +227,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     historyBody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-500">Belum ada riwayat absensi.</td></tr>';
                 }
 
-                // Check current status
                 const todayEntry = userRecords.find(r => r.tanggal === getTodayDateString());
                 if (todayEntry && !todayEntry.jam_pulang) {
                     updateUI('clocked-in', todayEntry);
@@ -296,16 +284,12 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAttendance();
     }
 
-    // ===================================================================================
-    // LOGIKA DASBOR ADMIN (admin-dashboard.html)
-    // ===================================================================================
     if (document.getElementById('tab-btn-attendance')) {
         auth.checkAuth('admin');
         const api = auth.getApi();
         let allUsers = [];
         let allAttendance = [];
 
-        // Tab switching logic
         const tabs = {
             attendance: { btn: document.getElementById('tab-btn-attendance'), content: document.getElementById('tab-content-attendance') },
             users: { btn: document.getElementById('tab-btn-users'), content: document.getElementById('tab-content-users') }
@@ -323,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
         tabs.attendance.btn.addEventListener('click', () => switchTab('attendance'));
         tabs.users.btn.addEventListener('click', () => switchTab('users'));
         
-        // --- Manajemen Pengguna ---
         const usersTableBody = document.getElementById('users-table-body');
         const renderUsers = () => {
             usersTableBody.innerHTML = '';
@@ -371,13 +354,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     '<input id="swal-input2" class="swal2-input" placeholder="Password" type="password">' +
                     '<select id="swal-input3" class="swal2-select"><option value="karyawan">Karyawan</option><option value="admin">Admin</option></select>',
                 focusConfirm: false,
-                preConfirm: () => {
-                    return [
-                        document.getElementById('swal-input1').value,
-                        document.getElementById('swal-input2').value,
-                        document.getElementById('swal-input3').value
-                    ]
-                }
+                preConfirm: () => [
+                    document.getElementById('swal-input1').value,
+                    document.getElementById('swal-input2').value,
+                    document.getElementById('swal-input3').value
+                ]
             });
 
             if (formValues) {
@@ -436,10 +417,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // --- Laporan Absensi ---
         const attendanceBody = document.getElementById('all-attendance-body');
         const renderAttendance = (filteredData) => {
             attendanceBody.innerHTML = '';
+            if (filteredData.length === 0) {
+                attendanceBody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-500">Tidak ada data yang cocok.</td></tr>';
+                return;
+            }
             filteredData.forEach(rec => {
                 const row = `
                     <tr>
@@ -463,7 +447,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // Filter logic
         const filterNameInput = document.getElementById('filter-name');
         const filterDateInput = document.getElementById('filter-date');
         const applyFilters = () => {
@@ -482,7 +465,6 @@ document.addEventListener('DOMContentLoaded', () => {
         filterNameInput.addEventListener('input', applyFilters);
         filterDateInput.addEventListener('change', applyFilters);
 
-        // Export logic
         document.getElementById('export-excel-btn').addEventListener('click', () => {
             const table = document.getElementById('attendance-table');
             const wb = XLSX.utils.table_to_book(table, { sheet: "Laporan Absensi" });
@@ -496,7 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.save('Laporan_Absensi.pdf');
         });
 
-        // Initial load
         loadUsers();
         loadAttendance();
     }
