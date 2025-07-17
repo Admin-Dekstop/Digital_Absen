@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Karyawan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-2xl font-bold text-gray-800">Dasbor Karyawan</h1>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-gray-700 mr-4">Selamat datang, <strong id="user-display-name" class="font-semibold"></strong>!</span>
+                    <button id="logout-btn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- Kolom Absensi -->
+                <div class="md:col-span-1 bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Absensi Hari Ini</h2>
+                    <div id="current-status" class="p-4 rounded-md text-center mb-4">
+                        <!-- Status akan diisi oleh JS -->
+                    </div>
+                    <div class="space-y-4">
+                        <button id="clock-in-btn" class="w-full px-4 py-3 font-bold text-white bg-green-600 rounded-md hover:bg-green-700 transition-all duration-300 disabled:bg-gray-400">
+                            CLOCK IN
+                        </button>
+                        <button id="clock-out-btn" class="w-full px-4 py-3 font-bold text-white bg-orange-500 rounded-md hover:bg-orange-600 transition-all duration-300 disabled:bg-gray-400">
+                            CLOCK OUT
+                        </button>
+                    </div>
+                    <div id="loading-spinner" class="hidden text-center mt-4">
+                        <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-sm text-gray-500 mt-2">Menyimpan data...</p>
+                    </div>
+                </div>
+
+                <!-- Kolom Riwayat Absensi -->
+                <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Riwayat Absensi Anda</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jam Masuk</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jam Pulang</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durasi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-history-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Data riwayat akan diisi oleh JS -->
+                                <tr><td colspan="4" class="text-center p-4 text-gray-500">Memuat riwayat...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- CDN untuk PapaParse (CSV Parser) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- Script utama aplikasi -->
+    <script src="scripts.js"></script>
+</body>
+</html>
