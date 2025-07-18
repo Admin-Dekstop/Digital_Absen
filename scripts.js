@@ -1,15 +1,12 @@
 // ===================================================================================
 // KONFIGURASI FIREBASE
-// PENTING: Salin dan tempel objek konfigurasi Firebase Anda di sini.
-// Anda mendapatkannya dari Langkah 1.3.
+// SUDAH DIISI DENGAN KUNCI ANDA. TIDAK PERLU DIUBAH LAGI.
 // ===================================================================================
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCOEDrWyOrubRUHXY0AouAiXvR294FcUbQ",
   authDomain: "data-absen-f5595.firebaseapp.com",
   projectId: "data-absen-f5595",
-  storageBucket: "data-absen-f5595.firebasestorage.app",
+  storageBucket: "data-absen-f5595.appspot.com",
   messagingSenderId: "357673916959",
   appId: "1:357673916959:web:2bae1e5ab3f19cb5ca932a",
   measurementId: "G-DGHTWY3GPG"
@@ -75,6 +72,10 @@ if (document.getElementById('login-form')) {
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 window.location.href = userData.role === 'admin' ? 'admin-dashboard.html' : 'karyawan-dashboard.html';
+            } else {
+                // Jika user ada di Auth tapi tidak di DB, logout saja
+                hideLoading();
+                signOut(auth);
             }
         }
     });
@@ -90,7 +91,7 @@ if (document.getElementById('login-form')) {
             // onAuthStateChanged akan menangani pengalihan halaman
         } catch (error) {
             hideLoading();
-            showAlert('Gagal Login', error.message, 'error');
+            showAlert('Gagal Login', 'Email atau password salah.', 'error');
         }
     });
 
@@ -105,11 +106,10 @@ if (document.getElementById('login-form')) {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
-            // Simpan data tambahan pengguna di Firestore
             await setDoc(doc(db, "users", user.uid), {
                 username: username,
                 email: email,
-                role: 'karyawan' // Semua yang mendaftar otomatis jadi karyawan
+                role: 'karyawan'
             });
 
             hideLoading();
@@ -142,16 +142,13 @@ const handleDashboardPage = (requiredRole) => {
                     return;
                 }
                 userDisplayName.textContent = userData.username;
-                // Jalankan fungsi spesifik halaman setelah user terverifikasi
                 if (requiredRole === 'karyawan') initKaryawanPage(user, userData);
                 if (requiredRole === 'admin') initAdminPage(user, userData);
             } else {
-                // Dokumen user tidak ada, mungkin kesalahan saat registrasi
-                showAlert('Error', 'Data pengguna tidak ditemukan.', 'error');
+                showAlert('Error', 'Data pengguna tidak ditemukan. Silakan login ulang.', 'error');
                 signOut(auth);
             }
         } else {
-            // Pengguna tidak login
             window.location.href = 'index.html';
         }
     });
@@ -190,7 +187,6 @@ function initKaryawanPage(user, userData) {
         }
     };
 
-    // Dengarkan perubahan data absensi secara real-time
     const q = query(collection(db, "absensi"), where("userId", "==", user.uid));
     onSnapshot(q, (querySnapshot) => {
         const userRecords = [];
@@ -198,8 +194,7 @@ function initKaryawanPage(user, userData) {
             userRecords.push({ id: doc.id, ...doc.data() });
         });
         
-        // Urutkan dari yang terbaru
-        userRecords.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+        userRecords.sort((a, b) => new Date(b.tanggal + 'T' + b.jam_masuk) - new Date(a.tanggal + 'T' + a.jam_masuk));
         
         historyBody.innerHTML = '';
         if (userRecords.length > 0) {
@@ -254,7 +249,6 @@ function initKaryawanPage(user, userData) {
     clockOutBtn.addEventListener('click', () => performClocking('out'));
 }
 
-
 // ===================================================================================
 // HALAMAN DASBOR ADMIN
 // ===================================================================================
@@ -277,7 +271,6 @@ function initAdminPage(user, userData) {
     };
     Object.keys(tabs).forEach(key => tabs[key].btn.addEventListener('click', () => switchTab(key)));
 
-    // --- Manajemen Pengguna ---
     const usersTableBody = document.getElementById('users-table-body');
     onSnapshot(collection(db, "users"), (snapshot) => {
         usersTableBody.innerHTML = '';
@@ -293,12 +286,16 @@ function initAdminPage(user, userData) {
         });
     });
 
-    // --- Rekap Absensi ---
     const attendanceBody = document.getElementById('all-attendance-body');
     onSnapshot(collection(db, "absensi"), (snapshot) => {
         attendanceBody.innerHTML = '';
+        const allRecords = [];
         snapshot.forEach(doc => {
-            const rec = doc.data();
+            allRecords.push(doc.data());
+        });
+        allRecords.sort((a, b) => new Date(b.tanggal + 'T' + b.jam_masuk) - new Date(a.tanggal + 'T' + a.jam_masuk));
+        
+        allRecords.forEach(rec => {
             const row = `<tr>
                 <td class="px-6 py-4">${rec.username}</td>
                 <td class="px-6 py-4">${rec.tanggal}</td>
