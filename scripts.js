@@ -4,13 +4,13 @@
 // ===================================================================================
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCOEDrWyOrubRUHXY0AouAiXvR294FcUbQ",
-  authDomain: "data-absen-f5595.firebaseapp.com",
-  projectId: "data-absen-f5595",
-  storageBucket: "data-absen-f5595.firebasestorage.app",
-  messagingSenderId: "357673916959",
-  appId: "1:357673916959:web:f3b15e00d1f95020ca932a",
-  measurementId: "G-570FNVD28C"
+  apiKey: "AIzaSyC7Nm9Z_UNUFXxk3sp9LzcJjFKHm0qRVbs",
+  authDomain: "molten-gasket-450501-t7.firebaseapp.com",
+  projectId: "molten-gasket-450501-t7",
+  storageBucket: "molten-gasket-450501-t7.firebasestorage.app",
+  messagingSenderId: "117086637968",
+  appId: "1:117086637968:web:7bc829c430b85fbc4aad15",
+  measurementId: "G-P7Y10TS799"
 };
 // ===================================================================================
 
