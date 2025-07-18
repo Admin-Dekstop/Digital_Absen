@@ -7,23 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- SheetJS for Excel Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- jsPDF for PDF Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .tab-button.active {
-            border-color: #3b82f6;
-            color: #3b82f6;
-            background-color: #eff6ff;
-        }
+        .tab-button.active { border-color: #3b82f6; color: #3b82f6; background-color: #eff6ff; }
     </style>
 </head>
 <body class="bg-gray-50">
 
-    <!-- Navbar -->
     <nav class="bg-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -36,17 +29,14 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Tab Buttons -->
         <div class="mb-6 border-b border-gray-200">
             <nav class="-mb-px flex space-x-6" aria-label="Tabs">
                 <button id="tab-btn-attendance" class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Rekap Absensi</button>
-                <button id="tab-btn-users" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">Manajemen Pengguna</button>
+                <button id="tab-btn-users" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500">Manajemen Pengguna</button>
             </nav>
         </div>
 
-        <!-- Tab Content -->
         <div id="tab-content-attendance">
             <div class="bg-white p-6 rounded-xl shadow-lg">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
@@ -56,7 +46,6 @@
                         <button id="export-pdf-btn" class="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600">Export PDF</button>
                     </div>
                 </div>
-                <!-- Filters -->
                 <div class="flex flex-col md:flex-row gap-4 mb-4">
                     <input type="text" id="filter-name" placeholder="Filter berdasarkan nama..." class="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md">
                     <input type="date" id="filter-date" class="w-full md:w-1/3 px-3 py-2 border border-gray-300 rounded-md">
@@ -71,9 +60,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jam Pulang</th>
                             </tr>
                         </thead>
-                        <tbody id="all-attendance-body" class="bg-white divide-y divide-gray-200">
-                           <!-- Data diisi JS -->
-                        </tbody>
+                        <tbody id="all-attendance-body" class="bg-white divide-y divide-gray-200"></tbody>
                     </table>
                 </div>
             </div>
@@ -94,18 +81,14 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
-                           <!-- Data diisi JS -->
-                        </tbody>
+                        <tbody id="users-table-body" class="bg-white divide-y divide-gray-200"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- CDN untuk PapaParse (CSV Parser) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <!-- Script utama aplikasi -->
     <script src="scripts.js"></script>
 </body>
 </html>
