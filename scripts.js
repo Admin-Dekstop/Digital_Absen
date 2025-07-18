@@ -6,7 +6,7 @@ const CONFIG = {
     // Masukkan Personal Access Token (PAT) dari akun "bot" GitHub Anda di sini.
     // PERINGATAN: Token ini akan bisa dilihat di kode sumber browser.
     // Gunakan token dari akun bot yang terisolasi untuk keamanan.
-    GITHUB_TOKEN: 'GANTI_DENGAN_TOKEN_DARI_AKUN_BOT_ANDA', // Contoh: ghp_xxxxxxxxxxxxxx
+    GITHUB_TOKEN: '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', // Contoh: ghp_xxxxxxxxxxxxxx
 
     // Masukkan path repositori dalam format 'username/nama-repo'.
     // Gunakan username dari akun "bot" Anda.
