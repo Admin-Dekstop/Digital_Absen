@@ -3,19 +3,20 @@
 // PENTING: Isi semua nilai di bawah ini!
 // ===================================================================================
 const CONFIG = {
-    // 1. GANTI NILAI DI BAWAH INI dengan Personal Access Token (PAT) dari akun
-    //    "kantor-absensi-bot" Anda.
-    GITHUB_TOKEN: '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', // <-- GANTI INI!
+    // Masukkan Personal Access Token (PAT) dari akun "bot" GitHub Anda di sini.
+    // PERINGATAN: Token ini akan bisa dilihat di kode sumber browser.
+    // Gunakan token dari akun bot yang terisolasi untuk keamanan.
+    GITHUB_TOKEN: 'GANTI_DENGAN_TOKEN_DARI_AKUN_BOT_ANDA', // Contoh: ghp_xxxxxxxxxxxxxx
 
-    // 2. Path repositori Anda. (SUDAH DIISI SESUAI PERMINTAAN ANDA)
-    REPO_PATH: 'kantor-absensi-bot/data-absensi-karyawan'
+    // Masukkan path repositori dalam format 'username/nama-repo'.
+    // Gunakan username dari akun "bot" Anda.
+    REPO_PATH: 'kantor-absensi-bot/data-absensi-karyawan' // Ganti jika nama repo/user bot Anda berbeda
 };
 // ===================================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
     const LS_KEYS = { USER_INFO: 'absensi_user_info' };
 
-    // API Helper Class
     class GitHubAPI {
         constructor(token, repoPath) {
             this.token = token;
@@ -26,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         async getFile(filePath) {
             const url = `https://api.github.com/repos/${this.repoPath}/contents/${filePath}`;
             try {
-                const response = await fetch(url, { headers: this.headers, cache: 'no-store' }); // no-store untuk data terbaru
+                const response = await fetch(url, { headers: this.headers, cache: 'no-store' });
                 if (!response.ok) {
                     if (response.status === 404) return null;
                     throw new Error(`Gagal mengambil file: ${response.statusText}`);
@@ -50,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Auth & Utility Functions
     const auth = {
         login: (userInfo) => {
             localStorage.setItem(LS_KEYS.USER_INFO, JSON.stringify(userInfo));
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         getUserInfo: () => JSON.parse(localStorage.getItem(LS_KEYS.USER_INFO)),
         getApi: () => {
-            if (CONFIG.GITHUB_TOKEN.startsWith('GANTI_')) {
+            if (CONFIG.GITHUB_TOKEN.startsWith('GANTI_') || CONFIG.REPO_PATH.startsWith('username-bot')) {
                 return null;
             }
             return new GitHubAPI(CONFIG.GITHUB_TOKEN, CONFIG.REPO_PATH);
@@ -81,17 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Universal API instance check ---
     const api = auth.getApi();
-    if (!api && !window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('/')) {
-        alert('Aplikasi belum dikonfigurasi! Harap hubungi admin untuk mengisi Token di scripts.js.');
+    const isLoginPage = window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/');
+    if (!api && !isLoginPage) {
+        alert('Aplikasi belum dikonfigurasi! Harap hubungi admin untuk mengisi Token dan Path Repositori di scripts.js.');
         window.location.href = 'index.html';
         return;
     }
 
-    // ===================================================================================
-    // HALAMAN LOGIN & REGISTRASI (index.html)
-    // ===================================================================================
     if (document.getElementById('login-form')) {
         const loginView = document.getElementById('login-view');
         const registerView = document.getElementById('register-view');
@@ -108,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loginView.classList.remove('hidden');
         });
 
-        // Login Logic
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!api) {
@@ -138,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Register Logic
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!api) {
@@ -182,9 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ===================================================================================
-    // DASBOR KARYAWAN (karyawan-dashboard.html)
-    // ===================================================================================
     if (document.getElementById('clock-in-btn')) {
         const userInfo = auth.checkAuth('karyawan');
         if (!userInfo) return;
@@ -195,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const historyBody = document.getElementById('attendance-history-body');
         const loadingSpinner = document.getElementById('loading-spinner');
 
-        const getTodayDateString = () => new Date().toLocaleDateString('en-CA'); // Format YYYY-MM-DD
+        const getTodayDateString = () => new Date().toLocaleDateString('en-CA');
         const getTimeString = (date) => date.toTimeString().split(' ')[0];
 
         const updateUI = (status, lastEntry) => {
@@ -222,19 +214,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 historyBody.innerHTML = '';
                 if (userRecords.length > 0) {
                     userRecords.forEach(rec => {
-                        const durasi = rec.jam_pulang ? 'Selesai' : 'Berlangsung'; // Durasi disederhanakan
                         const row = `
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${rec.tanggal}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${rec.jam_masuk}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${rec.jam_pulang || 'Belum Clock Out'}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${durasi}</td>
                             </tr>
                         `;
                         historyBody.innerHTML += row;
                     });
                 } else {
-                    historyBody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-500">Belum ada riwayat absensi.</td></tr>';
+                    historyBody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-500">Belum ada riwayat absensi.</td></tr>';
                 }
 
                 const todayEntry = userRecords.find(r => r.tanggal === getTodayDateString() && !r.jam_pulang);
@@ -282,15 +272,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAttendance();
     }
     
-    // ===================================================================================
-    // DASBOR ADMIN (admin-dashboard.html)
-    // ===================================================================================
     if (document.getElementById('tab-btn-users')) {
         auth.checkAuth('admin');
         let allUsers = [];
         let allAttendance = [];
 
-        // Tab switching logic
         const tabs = {
             attendance: { btn: document.getElementById('tab-btn-attendance'), content: document.getElementById('tab-content-attendance') },
             users: { btn: document.getElementById('tab-btn-users'), content: document.getElementById('tab-content-users') }
@@ -308,7 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
         tabs.attendance.btn.addEventListener('click', () => switchTab('attendance'));
         tabs.users.btn.addEventListener('click', () => switchTab('users'));
         
-        // --- Manajemen Pengguna ---
         const usersTableBody = document.getElementById('users-table-body');
         const renderUsers = () => {
             usersTableBody.innerHTML = '';
@@ -418,7 +403,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // --- Rekap Absensi ---
         const attendanceBody = document.getElementById('all-attendance-body');
         const renderAttendance = (filteredData) => {
             attendanceBody.innerHTML = '';
@@ -480,7 +464,6 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.save('Laporan_Absensi.pdf');
         });
 
-        // Initial load
         loadUsers();
         loadAttendance();
     }
