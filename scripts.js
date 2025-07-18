@@ -6,7 +6,7 @@ const CONFIG = {
     // Masukkan Personal Access Token (PAT) dari akun "bot" GitHub Anda di sini.
     // Token ini akan terlihat di kode sumber, jadi PASTIKAN token ini hanya memiliki
     // akses ke repositori data absensi saja.
-    GITHUB_TOKEN: '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', // Contoh: ghp_xxxxxxxxxxxxxx
+    GITHUB_TOKEN: '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', // Contoh: ghp_xxxxxxxxxxxxxx
 
     // Masukkan path repositori dalam format 'username/nama-repo'.
     // Gunakan username dari akun "bot" Anda.
