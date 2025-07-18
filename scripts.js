@@ -4,14 +4,15 @@
 // Anda mendapatkannya dari Langkah 1.3.
 // ===================================================================================
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyD0fn9GpXecR3MCDRxatZO8yy4fVxJwF5w",
-  authDomain: "sistem-absensi-kantor-ebd3b.firebaseapp.com",
-  projectId: "sistem-absensi-kantor-ebd3b",
-  storageBucket: "sistem-absensi-kantor-ebd3b.firebasestorage.app",
-  messagingSenderId: "150894457640",
-  appId: "1:150894457640:web:c07c5d5f6b83a4e72b561d",
-  measurementId: "G-CW25HP7NDS"
+  apiKey: "AIzaSyCOEDrWyOrubRUHXY0AouAiXvR294FcUbQ",
+  authDomain: "data-absen-f5595.firebaseapp.com",
+  projectId: "data-absen-f5595",
+  storageBucket: "data-absen-f5595.firebasestorage.app",
+  messagingSenderId: "357673916959",
+  appId: "1:357673916959:web:2bae1e5ab3f19cb5ca932a",
+  measurementId: "G-DGHTWY3GPG"
 };
 // ===================================================================================
 
