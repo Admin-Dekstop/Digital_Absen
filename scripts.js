@@ -3,14 +3,12 @@
 // PENTING: Isi semua nilai di bawah ini!
 // ===================================================================================
 const CONFIG = {
-    // Masukkan Personal Access Token (PAT) dari akun "bot" GitHub Anda di sini.
-    // Token ini akan terlihat di kode sumber, jadi PASTIKAN token ini hanya memiliki
-    // akses ke repositori data absensi saja.
-    GITHUB_TOKEN: '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', // Contoh: ghp_xxxxxxxxxxxxxx
+    // 1. GANTI NILAI DI BAWAH INI dengan Personal Access Token (PAT) dari akun
+    //    "kantor-absensi-bot" Anda.
+    GITHUB_TOKEN: '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', // <-- GANTI INI!
 
-    // Masukkan path repositori dalam format 'username/nama-repo'.
-    // Gunakan username dari akun "bot" Anda.
-    REPO_PATH: 'kantor-absensi-bot/data-absensi-karyawan' // Contoh: kantor-absensi-bot/data-absensi-karyawan
+    // 2. Path repositori Anda. (SUDAH DIISI SESUAI PERMINTAAN ANDA)
+    REPO_PATH: 'kantor-absensi-bot/data-absensi-karyawan'
 };
 // ===================================================================================
 
@@ -64,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         getUserInfo: () => JSON.parse(localStorage.getItem(LS_KEYS.USER_INFO)),
         getApi: () => {
-            if (CONFIG.GITHUB_TOKEN.startsWith('GANTI_') || CONFIG.REPO_PATH.startsWith('username-bot')) {
+            if (CONFIG.GITHUB_TOKEN.startsWith('GANTI_')) {
                 return null;
             }
             return new GitHubAPI(CONFIG.GITHUB_TOKEN, CONFIG.REPO_PATH);
@@ -85,8 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Universal API instance check ---
     const api = auth.getApi();
-    if (!api && window.location.pathname.includes('dashboard')) {
-        alert('Aplikasi belum dikonfigurasi! Harap hubungi admin untuk mengisi Token dan Path Repositori di scripts.js.');
+    if (!api && !window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('/')) {
+        alert('Aplikasi belum dikonfigurasi! Harap hubungi admin untuk mengisi Token di scripts.js.');
+        window.location.href = 'index.html';
         return;
     }
 
@@ -196,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const historyBody = document.getElementById('attendance-history-body');
         const loadingSpinner = document.getElementById('loading-spinner');
 
-        const getTodayDateString = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+        const getTodayDateString = () => new Date().toLocaleDateString('en-CA'); // Format YYYY-MM-DD
         const getTimeString = (date) => date.toTimeString().split(' ')[0];
 
         const updateUI = (status, lastEntry) => {
@@ -223,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 historyBody.innerHTML = '';
                 if (userRecords.length > 0) {
                     userRecords.forEach(rec => {
-                        const durasi = rec.jam_pulang ? 'Selesai' : 'Berlangsung'; // Simplified duration
+                        const durasi = rec.jam_pulang ? 'Selesai' : 'Berlangsung'; // Durasi disederhanakan
                         const row = `
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${rec.tanggal}</td>
@@ -283,6 +282,206 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAttendance();
     }
     
-    // Sisa kode untuk Dasbor Admin bisa ditambahkan di sini (tidak berubah dari versi sebelumnya, tanpa tombol sinkronisasi)
-    // ...
+    // ===================================================================================
+    // DASBOR ADMIN (admin-dashboard.html)
+    // ===================================================================================
+    if (document.getElementById('tab-btn-users')) {
+        auth.checkAuth('admin');
+        let allUsers = [];
+        let allAttendance = [];
+
+        // Tab switching logic
+        const tabs = {
+            attendance: { btn: document.getElementById('tab-btn-attendance'), content: document.getElementById('tab-content-attendance') },
+            users: { btn: document.getElementById('tab-btn-users'), content: document.getElementById('tab-content-users') }
+        };
+
+        const switchTab = (tabName) => {
+            Object.values(tabs).forEach(tab => {
+                tab.btn.classList.remove('active');
+                tab.content.classList.add('hidden');
+            });
+            tabs[tabName].btn.classList.add('active');
+            tabs[tabName].content.classList.remove('hidden');
+        };
+        
+        tabs.attendance.btn.addEventListener('click', () => switchTab('attendance'));
+        tabs.users.btn.addEventListener('click', () => switchTab('users'));
+        
+        // --- Manajemen Pengguna ---
+        const usersTableBody = document.getElementById('users-table-body');
+        const renderUsers = () => {
+            usersTableBody.innerHTML = '';
+            allUsers.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.username}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.role}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="text-indigo-600 hover:text-indigo-900 edit-user-btn" data-username="${user.username}">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 ml-4 delete-user-btn" data-username="${user.username}">Hapus</button>
+                    </td>
+                `;
+                usersTableBody.appendChild(row);
+            });
+        };
+
+        const loadUsers = async () => {
+            try {
+                const file = await api.getFile('users.csv');
+                allUsers = file ? Papa.parse(file.content, { header: true, skipEmptyLines: true }).data : [];
+                renderUsers();
+            } catch (error) {
+                Swal.fire('Error', `Gagal memuat pengguna: ${error.message}`, 'error');
+            }
+        };
+
+        const saveUsers = async (commitMessage) => {
+            try {
+                const { sha } = await api.getFile('users.csv');
+                const newCsvContent = Papa.unparse(allUsers, { header: true });
+                await api.updateFile('users.csv', newCsvContent, sha, commitMessage);
+                Swal.fire('Sukses', 'Data pengguna berhasil diperbarui.', 'success');
+                await loadUsers();
+            } catch (error) {
+                Swal.fire('Error', `Gagal menyimpan pengguna: ${error.message}`, 'error');
+            }
+        };
+        
+        document.getElementById('add-user-btn').addEventListener('click', async () => {
+            const { value: formValues } = await Swal.fire({
+                title: 'Tambah Pengguna Baru',
+                html:
+                    '<input id="swal-input1" class="swal2-input" placeholder="Username">' +
+                    '<input id="swal-input2" class="swal2-input" placeholder="Password" type="password">' +
+                    '<select id="swal-input3" class="swal2-select"><option value="karyawan">Karyawan</option><option value="admin">Admin</option></select>',
+                focusConfirm: false,
+                preConfirm: () => [
+                    document.getElementById('swal-input1').value,
+                    document.getElementById('swal-input2').value,
+                    document.getElementById('swal-input3').value
+                ]
+            });
+
+            if (formValues) {
+                const [username, password, role] = formValues;
+                if (!username || !password) {
+                    Swal.fire('Gagal', 'Username dan password tidak boleh kosong.', 'error');
+                    return;
+                }
+                if (allUsers.some(u => u.username === username)) {
+                    Swal.fire('Gagal', 'Username sudah ada.', 'error');
+                    return;
+                }
+                allUsers.push({ username, password, role });
+                await saveUsers(`[Admin] Menambah pengguna ${username}`);
+            }
+        });
+
+        usersTableBody.addEventListener('click', async (e) => {
+            const username = e.target.dataset.username;
+            if (!username) return;
+
+            if (e.target.classList.contains('delete-user-btn')) {
+                Swal.fire({
+                    title: 'Anda yakin?', text: `Pengguna "${username}" akan dihapus!`, icon: 'warning',
+                    showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, hapus!'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        allUsers = allUsers.filter(u => u.username !== username);
+                        await saveUsers(`[Admin] Menghapus pengguna ${username}`);
+                    }
+                });
+            }
+
+            if (e.target.classList.contains('edit-user-btn')) {
+                const user = allUsers.find(u => u.username === username);
+                const { value: formValues } = await Swal.fire({
+                    title: `Edit Pengguna: ${username}`,
+                    html:
+                        `<input id="swal-input1" class="swal2-input" placeholder="Password baru (kosongkan jika tidak berubah)">` +
+                        `<select id="swal-input2" class="swal2-select">
+                            <option value="karyawan" ${user.role === 'karyawan' ? 'selected' : ''}>Karyawan</option>
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                         </select>`,
+                    focusConfirm: false,
+                    preConfirm: () => [document.getElementById('swal-input1').value, document.getElementById('swal-input2').value]
+                });
+
+                if (formValues) {
+                    const [newPassword, newRole] = formValues;
+                    const userToUpdate = allUsers.find(u => u.username === username);
+                    if (newPassword) userToUpdate.password = newPassword;
+                    userToUpdate.role = newRole;
+                    await saveUsers(`[Admin] Mengedit pengguna ${username}`);
+                }
+            }
+        });
+        
+        // --- Rekap Absensi ---
+        const attendanceBody = document.getElementById('all-attendance-body');
+        const renderAttendance = (filteredData) => {
+            attendanceBody.innerHTML = '';
+            if (filteredData.length === 0) {
+                attendanceBody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-500">Tidak ada data yang cocok.</td></tr>';
+                return;
+            }
+            filteredData.forEach(rec => {
+                const row = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${rec.username}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${rec.tanggal}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${rec.jam_masuk}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${rec.jam_pulang || '-'}</td>
+                    </tr>
+                `;
+                attendanceBody.innerHTML += row;
+            });
+        };
+
+        const loadAttendance = async () => {
+            try {
+                const file = await api.getFile('absensi.csv');
+                allAttendance = file ? Papa.parse(file.content, { header: true, skipEmptyLines: true }).data : [];
+                renderAttendance(allAttendance);
+            } catch (error) {
+                Swal.fire('Error', `Gagal memuat absensi: ${error.message}`, 'error');
+            }
+        };
+
+        const filterNameInput = document.getElementById('filter-name');
+        const filterDateInput = document.getElementById('filter-date');
+        const applyFilters = () => {
+            let filtered = allAttendance;
+            const nameQuery = filterNameInput.value.toLowerCase();
+            const dateQuery = filterDateInput.value;
+
+            if (nameQuery) {
+                filtered = filtered.filter(rec => rec.username.toLowerCase().includes(nameQuery));
+            }
+            if (dateQuery) {
+                filtered = filtered.filter(rec => rec.tanggal === dateQuery);
+            }
+            renderAttendance(filtered);
+        };
+        filterNameInput.addEventListener('input', applyFilters);
+        filterDateInput.addEventListener('change', applyFilters);
+
+        document.getElementById('export-excel-btn').addEventListener('click', () => {
+            const table = document.getElementById('attendance-table');
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Laporan Absensi" });
+            XLSX.writeFile(wb, "Laporan_Absensi.xlsx");
+        });
+
+        document.getElementById('export-pdf-btn').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.autoTable({ html: '#attendance-table' });
+            doc.save('Laporan_Absensi.pdf');
+        });
+
+        // Initial load
+        loadUsers();
+        loadAttendance();
+    }
 });
