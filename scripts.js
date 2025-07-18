@@ -9,8 +9,8 @@ const firebaseConfig = {
   projectId: "molten-gasket-450501-t7",
   storageBucket: "molten-gasket-450501-t7.firebasestorage.app",
   messagingSenderId: "117086637968",
-  appId: "1:117086637968:web:7bc829c430b85fbc4aad15",
-  measurementId: "G-P7Y10TS799"
+  appId: "1:117086637968:web:8baeea223c382f3d4aad15",
+  measurementId: "G-CVXSP5X0V1"
 };
 // ===================================================================================
 
