@@ -1,16 +1,14 @@
 // ===================================================================================
 // KONFIGURASI APLIKASI
-// PENTING: Isi semua nilai di bawah ini!
+// PENTING: Saya sudah mengisi nilai di bawah ini dengan data Anda.
 // ===================================================================================
 const CONFIG = {
-    // Masukkan Personal Access Token (PAT) dari akun "bot" GitHub Anda di sini.
-    // PERINGATAN: Token ini akan bisa dilihat di kode sumber browser.
-    // Gunakan token dari akun bot yang terisolasi untuk keamanan.
-    GITHUB_TOKEN: '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', // Contoh: ghp_xxxxxxxxxxxxxx
+    // INI SUDAH SAYA ISI DENGAN TOKEN YANG ANDA BERIKAN.
+    // INGAT UNTUK MENGHAPUS TOKEN INI DAN MEMBUAT YANG BARU SETELAH SEMUANYA BERHASIL.
+    GITHUB_TOKEN: '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',
 
-    // Masukkan path repositori dalam format 'username/nama-repo'.
-    // Gunakan username dari akun "bot" Anda.
-    REPO_PATH: 'kantor-absensi-bot/data-absensi-karyawan' // Ganti jika nama repo/user bot Anda berbeda
+    // Path repositori Anda. INI JUGA SUDAH BENAR.
+    REPO_PATH: 'kantor-absensi-bot/data-absensi-karyawan'
 };
 // ===================================================================================
 
@@ -62,7 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         getUserInfo: () => JSON.parse(localStorage.getItem(LS_KEYS.USER_INFO)),
         getApi: () => {
-            if (CONFIG.GITHUB_TOKEN.startsWith('GANTI_') || CONFIG.REPO_PATH.startsWith('username-bot')) {
+            // Logika pengecekan diubah agar tidak error jika token asli mengandung 'GANTI_'
+            if (!CONFIG.GITHUB_TOKEN || CONFIG.GITHUB_TOKEN.length < 20) {
                 return null;
             }
             return new GitHubAPI(CONFIG.GITHUB_TOKEN, CONFIG.REPO_PATH);
@@ -84,7 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const api = auth.getApi();
     const isLoginPage = window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/');
     if (!api && !isLoginPage) {
-        alert('Aplikasi belum dikonfigurasi! Harap hubungi admin untuk mengisi Token dan Path Repositori di scripts.js.');
+        // Pesan error ini yang muncul jika token tidak valid atau kosong
+        Swal.fire('Error Konfigurasi', 'Aplikasi belum di-setup oleh admin. Cek `scripts.js`', 'error');
         window.location.href = 'index.html';
         return;
     }
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const file = await api.getFile('users.csv');
-                if (!file) throw new Error('File data pengguna tidak ditemukan. Hubungi admin.');
+                if (!file) throw new Error('File data pengguna (users.csv) tidak ditemukan di repositori. Hubungi admin.');
                 
                 const users = Papa.parse(file.content, { header: true, skipEmptyLines: true }).data;
                 const user = users.find(u => u.username === username && u.password === password);
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     Swal.fire('Gagal', 'Username atau password salah.', 'error');
                 }
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Swal.fire('Error', `Terjadi kesalahan: ${error.message}`, 'error');
             }
         });
 
@@ -177,6 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Sisa kode untuk dasbor karyawan dan admin tidak berubah
+    // ... (kode dari file sebelumnya)
     if (document.getElementById('clock-in-btn')) {
         const userInfo = auth.checkAuth('karyawan');
         if (!userInfo) return;
